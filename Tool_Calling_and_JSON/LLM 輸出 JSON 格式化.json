@@ -1,0 +1,1144 @@
+{
+  "name": "LLM 輸出 JSON 格式化",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.json.user_input = `From Sound to Sight: Towards AI-authored Music Videos Leo Vitasovic IT University of Copenhagen leov@itu.dk Stella Graßhof IT University of Copenhagen stgr@itu.dk Agnes Mercedes Kloft Aalto University agnes.kloft@aalto.fi Ville V. Lehtola University of Twente v.v.lehtola@utwente.nl Martin Cunneen University of Limerick martin.cunneen@ul.ie Justyna Starostka IT University of Copenhagen juss@itu.dk Glenn McGarry University of Nottingham glenn.mcgarry@nottingham.ac.uk Kun Li University of Twente k.li@utwente.nl Sami S. Brandt IT University of Copenhagen sambr@itu.dk Figure 1. Overview of the method proposed in this paper. Given a selected song, the pipeline generates video clips, which are then merged into a music video. The figure includes screenshots from clips generated given the specified music. The examples feature the following songs (from top to bottom): D ́ onal O’Connor and Muireann Nic Amhlaoibh: ”Fairy Jig”, Frank Sinatra: ”Strangers in the Night”, ”The March of the Volunteers” (Chinese national anthem) composed by Ni \\` e ˇ Er, and Aphex Twin: ”Xtal”, which can all be found on our Github. Abstract Conventional music visualisation systems rely on hand- crafted ad hoc transformations of shapes and colours that offer only limited expressiveness. We propose two novel pipelines for automatically generating music videos from any user-specified, vocal or instrumental song using off-the- shelf deep learning models. Inspired by the manual work- flows of music video producers, we experiment on how well latent feature-based techniques can analyse audio to detect musical qualities, such as emotional cues and instrumental patterns, and distil them into textual scene descriptions us- ing a language model. Next, we employ a generative model to produce the corresponding video clips. To assess the gen- erated videos, we identify several critical aspects and de- sign and conduct a preliminary user evaluation that demon- strates storytelling potential, visual coherency and emo- tional alignment with the music. Our findings underscore 1 arXiv:2509.00029v1 \\[cs.SD\\] 20 Aug 2025 the potential of latent feature techniques and deep gener- ative models to expand music visualisation beyond tradi- tional approaches. 1. Introduction This paper explores the processes of creating meaningful vi- suals that support storytelling to accompany a piece of mu- sic using AI-generated videos. Storytelling has been an im- portant characteristic of social development; oral traditions were once a key source of information communication by contextualising valuable information in a medium of a story \\[5, 53\\]. For some people, the ability of the story to conjure images and visuals provided a stimulating means of learn- ing and information acquisition \\[23\\]. The underlying idea of this paper is based on the natural tendency of people to associate music with other modalities, such as sight or touch \\[7, 32\\]. Such innate cross-modal perception may have in- fluenced early attempts to visually augment music, such as George H. Thomas’s creation of a series of images that ac- companied the live performance of The Little Lost Child in 1892, using a stereopticon \\[21\\]. At the same time, on the other side of the world, Jean Sibelius (1865–1957) expe- rienced synaesthesia — a condition in which he perceived sounds and musical keys as vivid colours \\[49\\]. This blend- ing of the senses enabled him not only to hear the natural world but also to see it in music, translating the landscapes of his homeland into compositions that evoke striking visual imagery in the listener’s mind. From the days of the stereopticon to the 20th and 21st centuries, the evolution of audiovisual technology, from the film camera and broadcast television to personal comput- ers and the internet, has continuously reshaped how music is experienced. These innovations paved the way for music videos, transforming them into a widely recognised art form that enhances the listener’s perception of music through vi- sual storytelling \\[11, 36\\]. What began as individual sensory experiences, such as Sibelius’s synaesthetic perceptions or Thomas’s early visual accompaniments, has evolved into a global multimedia phenomenon, demonstrating the growing synergy between sound and vision in artistic expression. AI-generated art has evolved from simple automated cre- ations to complex works spanning across multiple artistic domains \\[3, 10, 54\\]. This transformation has been largely driven by advancements in deep learning, particularly in generative models such as Generative Adversarial Networks (GANs) \\[22\\] and diffusion models \\[6\\]. Today, AI-generated works have been exhibited in galleries and have gained pub- lic attention in art auctions. The development and attention challenge traditional notions of artistic authorship and cre- ativity \\[18\\]. In the field of music visualisation, AI follows similar trends, automating what was once a handcrafted pro- cess. Traditional methods relied on manual design to trans- late music into visuals \\[40\\]. AI-powered tools, however, introduce new solutions by automating the process, gener- ating synchronised visuals from audio input. For instance, text-to-image diffusion models can translate musical themes and lyrics into visual sequences, but artists must manually specify the input text for the models, e.g. \\[1\\], as fully auto- mated solutions remain relatively sparse \\[33, 57\\]. This shift raises fundamental questions about the auton- omy of AI in artistic creation. Some scholars argue that AI systems function only as tools manipulated by human artists \\[16, 25, 26\\], while others claim that AI possesses a degree of creative autonomy, influencing the artistic process be- yond mere execution \\[4\\]. Our research broadly aims to ex- plore the potential for fully automating the art creation pro- cess, contributing to this ongoing debate about the agency of human creators versus AI models. Moreover, audience perception of AI-generated art remains an open discussion, as different studies show that human-created artworks are generally rated higher in expressiveness compared to AI- generated ones \\[29, 30\\]. Ethical concerns, particularly re- garding training data and originality, further complicate de- bates on creative ownership of AI-generated artworks \\[10\\]. Art is created for human experience \\[10\\], and its cre- ation has traditionally been an exclusively human domain \\[14\\]. The introduction of generative AI into this area is not merely a technological shift but an ethical one, challenging the value of human skill and creative labour. Indeed, new advances in generative AI blur the lines between human- made, human-curated, and human-inspired art \\[19, 44\\]. This ambiguity creates ethical and legal challenges regard- ing authorship and copyright, as it becomes difficult to dis- entangle the contributions of the user, the AI model, and the creators of the original training data \\[34\\]. Consequently, the ongoing integration of AI into the arts necessitates a deeper ethical framework to address issues of labour devaluation, creative authenticity, and the ownership of computationally generated culture. One of the most technically developed, yet ethically sen- sitive, applications of audio-to-video generation is speech- to-lip synchronisation, often used to create photorealistic talking heads \\[38\\]. In contrast, our work focuses on a less sensitive and less explored task: generating video di- rectly from music to support creative storytelling. While text-to-video generation has advanced significantly with the rise of latent diffusion models and transformer-based archi- tectures \\[2\\], audio-to-video synthesis from music remains an open research challenge. Early forms of music visu- alisation, such as those found in Windows Media Player \\[45\\], rely on signal processing techniques like Fourier trans- forms and spectrograms to create reactive animations. More recent tools, such as Specterr \\[57\\] or Kaiber \\[33\\], of- fer stylised audio-reactive visuals via templates and sim- ple heuristics. However, these systems lack semantic un- 2 derstanding, narrative structure, or temporal visual consis- tency. Their methodologies are proprietary and scientifi- cally undocumented. Similarly, several commercial tools use AI for audio-to-video generation, including Revid \\[56\\], NeuralFrames \\[47\\], and EasyVid \\[15\\]. However, none pro- vide technical details, and many rely heavily on lyrics or the additional user-input via text-prompts for content and style guidance, hence limiting their generalizability to au- dio without lyrics. A related studied domain is body mo- tion synchronisation with music, such as generating perfor- mance videos of people playing instruments or dancing. For instance, Zhu et al. \\[62\\] present a pipeline for synthesising videos of instrumental performances from raw audio. Sim- ilarly, Ren et al. introduce a method capable of aligning a generated dance sequence with the beat and rhythm of a song \\[51\\]. Those approaches aim to synchronise audio and generated human motion, smoothly capturing rhythmic and stylistic features. However, they are typically restricted to controlled human poses and fixed camera settings, hence hindering broader scene synthesis or narrative depth. One recent solution towards music-to-video storytelling has been proposed by Agarwal et al. \\[1\\], who offer a pipeline that generates music videos using lyrics, estimated emotional tone, and user style preferences. Their method relies on Whisper \\[50\\] to extract lyrics, followed by emotion estimation and LLM-based text refinement \\[48\\]. The result- ing text is used as input for Stable Diffusion \\[52\\] to gener- ate images, which are interpolated into a cohesive video. However, the method is limited to music with lyrics, and its visual coherence is heavily dependent on textual accuracy. In contrast, our work is designed to generalise to any musical input, including instrumental and non-verbal au- dio, enabling music-first video generation without reliance on lyrics. Inspired by the human workflow used by music video creators, our approach tocomputational synaesthesia aims to build on this foundation to provide appealing audio and music visualisations, as shown in Figure 1. The pipelines we propose present a novel approach to achieve computational synaesthesia in a technically sophis- ticated way that is also guided by (a) AI governance and ethics, and (b) artistic considerations to support greater value alignment in the model. In this way, the model design is informed by an ethics-by-design framework that com- bines the considerations from technical, artistic and gov- ernance points of view. The research takes a human-centric approach to computational synaesthesia by appealing to five key design features; (i) developing the pipeline on a human workflow, (ii) using natural language as the key medium of processing, (iii) informing the pipeline by the defining component of human synaesthesia as sensory transforma- tion, (iv) informing the pipeline with Artist values and (v) informing the approach with AI governance, risk and ethi- cal assessment. Note that one of our key design choices in- volves the use of text as a medium to keep the interpretabil- ity of the AI methods high, including being able to comply with the artist’s values and AI ethical standards. The contributions of the paper are as follows. •Instrumental Music VisualisationUnlike lyric-based methods, this approach only relies on instrumental cues to drive visuals. This enables video generation for instru- mental and lyrics-featuring music alike. •Latent Feature Techniques for Audio–Text Alignment We explore the potential of using contrastive language- audio pre-training (CLAP) and large audio language mod- els (LALM) to extract zero-shot, high-level musical at- tributes to represent an audio piece and write a story in- spired by the music. •LLM-Based Scene ScriptingWe use a large language model to translate CLAP-derived descriptors into concise, narrative-like scene prompts, guiding text-to-video gener- ation. •Degree of AI Agency in Art CreationWe pose questions about the degree of freedom with which an automated pipeline can generate art independently or with minimal guidance, and the cultural and artistic qualities and chal- lenges the results imply. •AI Music Video EvaluationWe design and conduct a user survey to evaluate the quality of storytelling and vi- sual content of the generated samples. We complement this survey by holding a more in-depth interview on the AI video generation capabilities of the pipelines. •Codeis published on Github 1 . 2. Method We base our pipelines on existing models and systems de- scribed in this section. 2.1. Contrastive Language-Audio Pre-training Contrastive language–audio pretraining (CLAP) \\[17\\] lever- ages contrastive learning to align audio signals and natural language descriptions in a joint embedding space. CLAP was trained on 128k audio-text pairs and evaluated on 16 downstream tasks spanning 8 different domains, demon- strating its versatility and robustness in modelling audio concepts. We leverage the foundation model in our pipeline for zero-shot audio analysis based on predefined class labels that we manually specify. Given an arbitrary musical in- put, vocal or instrumental, CLAP generates semantic labels which describe the audio’s characteristics, e.g. as ‘melodic piano’, ‘upbeat tempo’, or ‘sad and moody strings’. These high-level textual descriptors encapsulate the musical con- tent without the need for large domain-specific datasets or extensive manual labelling, and therefore are particularly 1 https://github.com/goodPointP/Results-For-Music-Visualization- Generation-Pipeline 3 valuable for music visualisation tasks. They are later used by a large language model to construct scene descriptions and narrative elements for the output video. 2.2. Large Audio Language Models LALMs represent an emerging paradigm in multimodal ar- tificial intelligence, designed to process and comprehend raw audio signals in conjunction with natural language \\[20\\]. Unlike conventional audio analysis techniques that rely on predefined feature extraction, LALMs are trained on exten- sive datasets of aligned audio and text, enabling them to de- velop a holistic understanding of complex auditory informa- tion, including musical structure, emotional valence, genre characteristics, and implicit narrative potential \\[13\\]. This integrated comprehension facilitates a semantically rich in- terpretation of audio, bridging the gap between acoustic phenomena and linguistic description. In one of our two pipelines, we harness the advanced ca- pabilities of LALMs to directly generate a coherent narra- tive concept or short story that thematically and emotionally resonates with a given input song. This method diverges from the CLAP-based approach by providing the raw au- dio track directly to the LALM, thereby circumventing the need for explicit, pre-extracted audio features. The LALM is prompted to synthesise a narrative concept that themat- ically and emotionally follows or would fit with the given song. This task evaluates the LALM’s interpretive and generative capacities: its ability to infer abstract concepts such as mood, energy, and temporal progression from au- dio data, and subsequently translate these inferences into a structured, imaginative narrative suitable for a music video. LALMs show potential to generate narratively coherent and emotionally aligned textual scripts with the given mu- sical piece. The resulting narrative is then either directly translated into scene descriptions by the LALM itself or fur- ther processed by a reasoning Large Language Model to de- compose the narrative into concrete, segment-aligned visual prompts for the subsequent text-to-video generation stage. 2.3. Large Language Models Recent advances in large language models (LLMs) have made them adept at performing a wide range of tasks, from summarisation to complex reasoning and creative text gen- eration \\[39, 42, 61\\]. In our workflow, we utilise LLMs specifically as a “video script-writing tool,” responsible for transforming CLAP-derived audio descriptors into coherent and contextually rich textual scene outlines. We usedDeepSeek-R1-Distill-Llama-8Bby DeepSeek \\[12\\], a reasoning-LLM \\[59\\] that combines the efficiency of a distilled model \\[60\\] with the advanced rea- soning capabilities typical of larger parameter models \\[43\\]. We find that the said model can interpret nuanced audio con- cepts from CLAP’s output classes and use this knowledge to generate a detailed narrative structure that aligns with the mood and style of the music. This reasoning step ensures that the generated video scenes are not merely random visual montages but are in- stead guided by a coherent storyline or thematic arc, re- flecting the emotional landscape of the audio. The LLM- based approach makes it easy to iterate and refine prompts by adjusting textual descriptions or keywords, thus offering flexibility in shaping the final visual output. 2.4. Text to Video Models The last stage of our pipeline involves converting the refined textual prompts into video clips using diffusion-based text- to-video models. Diffusion models have recently gained popularity for their ability to generate high-fidelity images and videos by iteratively denoising random noise toward a target distribution \\[27, 28\\]. However, when extending diffusion techniques from images to videos, several chal- lenges arise, such as limits in clip length and resolution, in- put prompt sensitivity and quality of human faces and over- all image consistency. Obtaining realistic human faces re- mains particularly difficult; many models tend to produce distorted or unstable facial features, which can be distract- ing or diminish the overall video quality \\[31\\]. Moreover, we find the outputs to be dependent on the concise wording...`;\n$input.item.json.count = 0;\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        1184
+      ],
+      "id": "6dafb664-8a1e-4579-9ab9-b1b2746e49fb",
+      "name": "模擬資料"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        1184
+      ],
+      "id": "b665d5c1-a123-433f-8ac4-00033425860a",
+      "name": "模擬執行"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for summary",
+        "workflowId": {
+          "__rl": true,
+          "value": "pY77CJmz0oAf1i8Y",
+          "mode": "list",
+          "cachedResultName": "summary"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('summary', `A concise summary that synthesizes the content. Avoid meta-comments or referring to the source itself; focus solely on the content and information presented.`, 'string') }}"
+          },
+          "matchingColumns": [
+            "summary"
+          ],
+          "schema": [
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        992
+      ],
+      "id": "02c92085-4da7-448f-80b5-d68478ed7e01",
+      "name": "Summary_Tool"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GPT-OSS-20B",
+          "mode": "list",
+          "cachedResultName": "GPT-OSS-20B"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        992
+      ],
+      "id": "37aaaafb-145e-40c1-b23a-717072edb00b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "IAyvKH7VolOHdfAE",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\"summary\": $input.item.json.intermediateSteps[0].action.toolInput.summary};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        752
+      ],
+      "id": "ddc99a9a-ad1b-41ed-af23-e79c24aa4dc5",
+      "name": "GET Summary"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        176,
+        960
+      ],
+      "id": "0b4b4ab1-4501-49f4-96b4-ed8221242d48",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IbVt9c1bYlHcAU7c",
+          "name": "gemini-balance"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## 迭代次數自動(或大於1)，讓 AI 自主修正內容\n### 優點: 最簡單實現錯誤重試\n### 缺點: 即便正確也會消耗兩倍以上的 Token",
+        "height": 464,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        656
+      ],
+      "typeVersion": 1,
+      "id": "bad13af3-b02f-4fef-8511-60807e1c40de",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GPT-OSS-20B",
+          "mode": "list",
+          "cachedResultName": "GPT-OSS-20B"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        1664
+      ],
+      "id": "555437c9-cb33-44b8-b117-c370f0834dfd",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "IAyvKH7VolOHdfAE",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 建立錯誤重試工作流\n### 優點: 當完全正確時，不會再次請求LLM，降低消耗，並且回傳錯誤資訊更可控\n### 缺點: 邏輯較複雜",
+        "height": 608,
+        "width": 1888,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        1152
+      ],
+      "typeVersion": 1,
+      "id": "a84d72a6-2995-47c4-b0f8-f14b3d82c633",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n        \"summary\": {\n          \"type\": \"string\",\n          \"description\": \"A concise summary that synthesizes the content. Avoid meta-comments or referring to the source itself; focus solely on the content and information presented.\"\n        }\n    },\n  \"required\": [\"summary\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        272
+      ],
+      "id": "6e0c627f-19bd-46e7-9fdb-da1d4191bca6",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "# LLM 輸出 JSON 格式化",
+        "height": 2832,
+        "width": 2416,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -368,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "b2b53585-9f21-4b50-8db8-eeab9e99cc9e",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# 基於 LangChain JSON 提取器\n## 優點: 非常簡單\n## 缺點: 很難穩定成功 (因為有些模型輸出 Markdown 格式的機率很高)",
+        "height": 512,
+        "width": 1152,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -256,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "d4107824-86bf-477f-8fe4-1c1a606dfbb9",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## n8n 內建支援",
+        "height": 320,
+        "width": 768,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "9d699b63-c6d3-4256-bee4-16ee8967db41",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GPT-OSS-20B",
+          "mode": "list",
+          "cachedResultName": "GPT-OSS-20B"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        272
+      ],
+      "id": "8e02a5db-e31d-4d19-81d5-cf6e96723562",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "IAyvKH7VolOHdfAE",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\"summary\": $json.output.summary};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        128
+      ],
+      "id": "7bdc41ed-0de8-4254-9475-23eb78e6aa5a",
+      "name": "Code in JavaScript",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Data\n{{ $json.user_input }}\n\nWhen you respond:\n1. use function calling with a declared JSON schema.\n2. Do **not** include any Markdown code fences (``` or ```json or ```) in your JSON.\n3. Do NOT include backticks or markdown code fences in any JSON.\n4. Follow example:\n{\"summary\": \"This New is about...\"}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an information aggregation assistant.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        128
+      ],
+      "id": "9165e06e-4df8-49e8-931f-d307a5f0f21a",
+      "name": "AI Agent1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "# 基於 Function Calling\n## 優點: 開發效率高且輸出也較穩定\n## 缺點: 模型必須要支援呼叫工具",
+        "height": 1376,
+        "width": 2166,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -256,
+        464
+      ],
+      "typeVersion": 1,
+      "id": "44ae3388-4951-4de4-8f1f-d8e438590b26",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## 使用正則表達式提取內容 - 缺陷: 需要同時寫提取程式碼和提示詞",
+        "height": 384,
+        "width": 816,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        2096
+      ],
+      "typeVersion": 1,
+      "id": "4605a3a6-350b-4c15-bb9a-ef639d6b5d06",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_input }}",
+        "options": {
+          "systemMessage": "You are an information aggregation assistant. Extract information from markdown and return it according to the following structure.\n\n## Summary\nA concise summary that synthesizes the content. Avoid meta-comments or referring to the source itself; focus solely on the content and information presented.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        2192
+      ],
+      "id": "4d0cb29b-a0f0-45b2-8836-726c287ce930",
+      "name": "AI Agent2",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "# 基於正則表達式\n## 優點: 所有 LLM 皆可使用，不依賴 Function Calling，並且可以寬鬆匹配內容\n## 缺點: 需要同時改提示詞和提取程式碼",
+        "height": 608,
+        "width": 1312,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -256,
+        1920
+      ],
+      "typeVersion": 1,
+      "id": "d1d4a843-adc4-47af-b3a8-5ba99a3f4fd1",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GPT-OSS-20B",
+          "mode": "list",
+          "cachedResultName": "GPT-OSS-20B"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        2352
+      ],
+      "id": "14a99103-840e-4f9f-a297-930d3a4535ba",
+      "name": "OpenAI Chat Model4",
+      "credentials": {
+        "openAiApi": {
+          "id": "IAyvKH7VolOHdfAE",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "94839be8-16a6-446a-8b04-f87ec978ba15",
+              "leftValue": "={{ $json.tool_return_json[0].status }}",
+              "rightValue": "=correct",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        1568
+      ],
+      "id": "d34775d9-8ef7-4440-9efd-7f732a643080",
+      "name": "工具調用不是正確的"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.json.error = `# Call Summary_Tool Input\n{\"summary\": \"${$json.intermediateSteps[0].action.toolInput.summary}\"}\n# Error Message\n${$json.tool_return_json[0].error_msg}`\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        1472
+      ],
+      "id": "a020a8bf-44a7-473d-a563-638c5429a0d4",
+      "name": "加入錯誤資訊到輸入中"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\"summary\": $input.item.json.intermediateSteps[0].action.toolInput.summary};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        1632
+      ],
+      "id": "76aa80aa-482e-4d7c-80f3-ff721a878fc8",
+      "name": "直接取得 Summary"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1fa0533a-d943-4ce0-a6fa-ae2c6a868283",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        1520
+      ],
+      "id": "35fd928f-f32c-41e5-a424-83faf9ad1828",
+      "name": "最大迭代次數"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        1280
+      ],
+      "id": "8d36e5d2-0447-430d-98c5-22315fa6e665",
+      "name": "無功能節點"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for summary",
+        "workflowId": {
+          "__rl": true,
+          "value": "pY77CJmz0oAf1i8Y",
+          "mode": "list",
+          "cachedResultName": "summary"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('summary', `A concise summary that synthesizes the content. Avoid meta-comments or referring to the source itself; focus solely on the content and information presented.`, 'string') }}"
+          },
+          "matchingColumns": [
+            "summary"
+          ],
+          "schema": [
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        1664
+      ],
+      "id": "40056450-1833-4bb7-a087-0c3a76ac0e25",
+      "name": "Summary_Tool1"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\"user_input\":$input.item.json.user_input + $input.item.json.error, \"count\": $input.item.json.count+1}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        1264
+      ],
+      "id": "2bd15d4e-bd9f-49bc-a480-389ae6e0390f",
+      "name": "將錯誤資訊放入 Input 中"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1376,
+        1200
+      ],
+      "id": "93113e19-6e6e-405e-9053-fe672689b913",
+      "name": "彙整原始資料+錯誤紀錄"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "94839be8-16a6-446a-8b04-f87ec978ba15",
+              "leftValue": "={{ $json.intermediateSteps[0].observation }}",
+              "rightValue": "=[\n  {\n    \"status\": \"correct\"\n  }\n]",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        1504
+      ],
+      "id": "9163b059-5fc0-43b9-9940-bb8b9badaf84",
+      "name": "沒有調用工具"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.json.error = `Please call the tool to perform the task`\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        1280
+      ],
+      "id": "c1fbc89d-594f-4b30-a64d-7474dedac478",
+      "name": "加入調用工具的資訊到輸入中"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_input }}\n\nUse Summary_Tool to write a summary.\nIf the tool returns {\"status\": \"correct\"}, you must stop and say nothing.\nIf the tool returns {\"status\": \"error\", \"error_msg\": \"...\"}, you need to fix the problem.\n\n",
+        "options": {
+          "systemMessage": "You are an information aggregation assistant.",
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        752
+      ],
+      "id": "50a19d83-c1be-446c-acf8-182a15e2ee44",
+      "name": "自動工具調用",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_input }}\n\nUse Summary_Tool to write a summary.",
+        "options": {
+          "systemMessage": "You are an information aggregation assistant.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        1504
+      ],
+      "id": "3ce40fbd-deff-4ca1-8fcf-ecc1dcf769e1",
+      "name": "限制工具調用",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Use tool calling to get json error."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        176,
+        1632
+      ],
+      "id": "d7f2df32-2ee5-434b-aab8-61c4c6961181",
+      "name": "報錯(此處忽略並執行下個)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "summary"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        2896
+      ],
+      "id": "0066844d-129c-45f7-b1a8-73e113aa8e8e",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "python",
+        "pythonCode": "return {\"status\": \"correct\"}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        2800
+      ],
+      "id": "3b68261e-5a7a-4fa4-b473-fc0aa423b39a",
+      "name": "correct"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "python",
+        "pythonCode": "return {\"status\": \"Error\", \"error_msg\": \"summary is not exists or empty.\"}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        2992
+      ],
+      "id": "a9c34ddf-1238-4690-ba15-1194a4f02dd3",
+      "name": "error and msg"
+    },
+    {
+      "parameters": {
+        "content": "# Summary_Tool (workflow)",
+        "height": 480,
+        "width": 1088
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -368,
+        2688
+      ],
+      "typeVersion": 1,
+      "id": "8e3c464f-e1f4-4b6c-af62-d59afb0e4ccd",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cdb44ef6-e6f8-4ffe-b093-d7d9b507fe01",
+              "leftValue": "={{ $json.summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "b55a4b5c-03ee-4f04-9e45-3ea8130e4a44",
+              "leftValue": "={{ $json.summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        2896
+      ],
+      "id": "92ffac85-17f6-425e-b1f4-80a8dfcb3fb6",
+      "name": "判斷 summary 是否正確"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function parseSections(input) {\n  const sectionMap = {\n    summary: [\"summary\", \"summaries\", \"abstract\"],\n  };\n  const sections = input.split(/##\\s*/).filter(Boolean);\n  const result = {\n    summary: \"\",\n  };\n  for (let sec of sections) {\n    const [rawHeader, ...bodyParts] = sec.split(\"\\n\");\n    const body = bodyParts.join(\"\\n\").trim();\n    const header = rawHeader.trim().toLowerCase();\n\n    for (const [key, variants] of Object.entries(sectionMap)) {\n      if (variants.some(v => header.includes(v))) {\n          result[key] = body;\n      }\n    }\n  }\n  return result;\n}\nreturn { \"summary\": parseSections($input.item.json.output).summary }"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        2192
+      ],
+      "id": "32ff0ec6-acd4-4e71-9a06-2ae3882033ba",
+      "name": "寬鬆提取摘要內容"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.json.tool_return_json = JSON.parse($json.intermediateSteps[0].observation);\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1520
+      ],
+      "id": "b1268229-aa61-4ef5-98b2-4a1e4bda5afd",
+      "name": "提取工具回傳資訊"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "模擬資料": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "自動工具調用",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "無功能節點",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "模擬執行": {
+      "main": [
+        [
+          {
+            "node": "模擬資料",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary_Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "自動工具調用",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "自動工具調用",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "限制工具調用",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "寬鬆提取摘要內容",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "工具調用不是正確的": {
+      "main": [
+        [
+          {
+            "node": "加入錯誤資訊到輸入中",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "直接取得 Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "加入錯誤資訊到輸入中": {
+      "main": [
+        [
+          {
+            "node": "彙整原始資料+錯誤紀錄",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "最大迭代次數": {
+      "main": [
+        [
+          {
+            "node": "限制工具調用",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "報錯(此處忽略並執行下個)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "無功能節點": {
+      "main": [
+        [
+          {
+            "node": "彙整原始資料+錯誤紀錄",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "最大迭代次數",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary_Tool1": {
+      "ai_tool": [
+        [
+          {
+            "node": "限制工具調用",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "將錯誤資訊放入 Input 中": {
+      "main": [
+        [
+          {
+            "node": "無功能節點",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "彙整原始資料+錯誤紀錄": {
+      "main": [
+        [
+          {
+            "node": "將錯誤資訊放入 Input 中",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "沒有調用工具": {
+      "main": [
+        [
+          {
+            "node": "加入調用工具的資訊到輸入中",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "提取工具回傳資訊",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "加入調用工具的資訊到輸入中": {
+      "main": [
+        [
+          {
+            "node": "彙整原始資料+錯誤紀錄",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "自動工具調用": {
+      "main": [
+        [
+          {
+            "node": "GET Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "限制工具調用": {
+      "main": [
+        [
+          {
+            "node": "沒有調用工具",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "判斷 summary 是否正確",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判斷 summary 是否正確": {
+      "main": [
+        [
+          {
+            "node": "correct",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "error and msg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取工具回傳資訊": {
+      "main": [
+        [
+          {
+            "node": "工具調用不是正確的",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "561c07f2-6e5c-4b4f-841d-4f42b7fe8987",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6ac75992c7f9035ab673701565085970a159fcba1240fe6009ea3907713bec1"
+  },
+  "id": "0CsR3LQ1HgjNSLau",
+  "tags": []
+}

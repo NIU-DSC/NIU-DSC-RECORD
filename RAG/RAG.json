@@ -1,0 +1,543 @@
+{
+  "name": "RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "RAG",
+        "formDescription": "Let's Crawl and RAG.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "URL",
+              "placeholder": "input the website URL.",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -64,
+        80
+      ],
+      "id": "19fb09ea-7e9c-4e82-9d35-b63f58b4e299",
+      "name": "資料提交",
+      "webhookId": "65d7029a-560e-4fd7-8bc1-2491b21270bd"
+    },
+    {
+      "parameters": {
+        "content": "## 爬取網頁資料",
+        "height": 416,
+        "width": 544,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "77fe9ae3-fba9-49cc-9f3d-065709b763a9",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "scrape",
+        "url": "={{ $json.URL }}",
+        "additionalFields": {},
+        "useCustomBody": true,
+        "requestOptions": {}
+      },
+      "type": "@mendable/n8n-nodes-firecrawl.firecrawl",
+      "typeVersion": 1,
+      "position": [
+        352,
+        80
+      ],
+      "id": "65790b82-944d-45cd-815c-5aff923d7a5d",
+      "name": "FireCrawl - 擷取網頁內容並且整理成 Markdown",
+      "credentials": {
+        "firecrawlApi": {
+          "id": "wCThfONrNsNAic6A",
+          "name": "FireCrawl-HF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cf1b46cc-3c05-4fd9-87b5-9c82a5d64ee2",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        80
+      ],
+      "id": "b542c937-6d40-4369-8f7d-54d4bfedb8f2",
+      "name": "保留成功網頁"
+    },
+    {
+      "parameters": {
+        "content": "## AI Agent 提取知識內容",
+        "height": 416,
+        "width": 688,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "8a1beccb-9a4f-4bad-b1dd-a517a22b53c0",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional knowledge extraction expert, capable of accurately identifying key information from complex Markdown content and rewriting it into new, professional, and objective knowledge-based text.\n\n# Markdown Data\n{{ $json.data.markdown }}\n\n# Rules\n- Avoid using phrases such as \"this webpage,\" \"this study,\" \"this news,\" or \"this post.\"\n- Maintain a neutral, rational, and professional tone.\n- Use knowledge_tool to input the extracted knowledge.",
+        "options": {
+          "maxIterations": 1,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        80
+      ],
+      "id": "a41da3a1-d937-435c-add3-9571092c71dd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "content": "## Tool Workflow",
+        "height": 448,
+        "width": 902
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        384
+      ],
+      "typeVersion": 1,
+      "id": "037c9fbb-a275-4cfe-870a-ace184714052",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "knowledge"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        560
+      ],
+      "id": "ca71c337-79d7-40f0-ac9d-cfe8c7cf27cf",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f4a132ae-d794-472d-ba5d-18c9f1654d7f",
+              "leftValue": "={{ json.knowledge }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        560
+      ],
+      "id": "f47f2e6e-c6a4-4734-a166-cbd9571e5724",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "python",
+        "pythonCode": "return {\"status\": \"correct\"}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        464
+      ],
+      "id": "9235dfb6-2fe7-4178-982d-bc7ca008d93e",
+      "name": "correct"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "python",
+        "pythonCode": "return {\"status\": \"Error\", \"error_msg\": \"Knowledge is not exists or empty.\"}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        656
+      ],
+      "id": "785c141e-a89b-4fa3-8bef-28bdf70a0c0c",
+      "name": "error and msg"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for Knowledge Extraction",
+        "workflowId": {
+          "__rl": true,
+          "value": "E4VInJ96YyN2Ucuf",
+          "mode": "list",
+          "cachedResultName": "Knowledge Extraction"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "knowledge": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('knowledge', `Avoid using phrases such as \"this webpage,\" \"this study,\" \"this news,\" or \"this post.\"\nMaintain a neutral, rational, and professional tone.`, 'string') }}"
+          },
+          "matchingColumns": [
+            "summary"
+          ],
+          "schema": [
+            {
+              "id": "knowledge",
+              "displayName": "knowledge",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        224
+      ],
+      "id": "ac264fd1-52ed-4fae-b86c-7487e68ddcbc",
+      "name": "knowledge_tool"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\"knowledge\": $input.item.json.intermediateSteps[0].action.toolInput.knowledge};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        80
+      ],
+      "id": "1bcf81cc-a56c-484a-aada-97cbf6ec4119",
+      "name": "GET Knowledge"
+    },
+    {
+      "parameters": {
+        "content": "## 寫入向量資料庫 (知識資料庫)",
+        "height": 416,
+        "width": 672,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1584,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "a1ab69f7-af80-45d3-8741-abd40fb35cbb",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "rag_test",
+          "mode": "list",
+          "cachedResultName": "rag_test"
+        },
+        "embeddingBatchSize": 3072,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1792,
+        80
+      ],
+      "id": "10d83965-b0e6-47da-a73e-2af0fda63d08",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "hfs5B64qhgMYPD3W",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        224
+      ],
+      "id": "f13def1d-a2b8-4729-9f64-ae11e92da101",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        960,
+        224
+      ],
+      "id": "d19e63d9-0fad-4f09-b062-d2fe3822f483",
+      "name": "Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IbVt9c1bYlHcAU7c",
+          "name": "gemini-balance"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        224
+      ],
+      "id": "6a041deb-316f-4fb5-932e-171bed409425",
+      "name": "Embeddings",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IbVt9c1bYlHcAU7c",
+          "name": "gemini-balance"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 資料來源",
+        "height": 416,
+        "width": 368,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "f20636c0-56f7-47ba-875c-2c811c303a07",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "資料提交": {
+      "main": [
+        [
+          {
+            "node": "FireCrawl - 擷取網頁內容並且整理成 Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FireCrawl - 擷取網頁內容並且整理成 Markdown": {
+      "main": [
+        [
+          {
+            "node": "保留成功網頁",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "保留成功網頁": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "correct",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "error and msg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "knowledge_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "GET Knowledge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Knowledge": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "583cb254-9abb-420e-94a3-6cb60d8d4c92",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6ac75992c7f9035ab673701565085970a159fcba1240fe6009ea3907713bec1"
+  },
+  "id": "PJPrYVqmNqjy0CKR",
+  "tags": []
+}
