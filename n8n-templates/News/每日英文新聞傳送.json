@@ -1,0 +1,317 @@
+{
+  "name": "每日英文新聞傳送",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        144
+      ],
+      "id": "95a58d52-c318-405a-9e52-bb5564a0f494",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        144
+      ],
+      "id": "73ab7846-f6ba-4ff3-8a41-4d23dbf74d7c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        272,
+        144
+      ],
+      "id": "61ceb271-440f-4c92-beb4-edab275a5f74",
+      "name": "XML"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=你是一個專業新聞助手(角色)，任務是根據新聞連結調用HTTP Request工具進行新聞爬文，保持原意並精簡內容，以英文輸出(任務)，接收內容的對象目的為透過簡短英文新聞，增廣見聞的同時學習英文(背景)，請保證輸出內容不影響原意且簡短內容(輸出)，保留原連結。\n**新聞連結**\n{{ $json.link }}\n\n**輸出格式範例**\n[新聞內容]\nNews Title \nlink:.....\nnews content......\n\n\n**注意事項**\n1.請保證輸出內容不影響原意且簡短內容。\n2.請確保內容是原文。\n3.需要排版成易讀格式。\n4.注意長度不要超過800個字。\n5.輸出內容請用在Discord上易讀的格式美化(標題字體變粗等等)。",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        144
+      ],
+      "id": "3fd66ef7-e3e3-4b7d-a30e-ae4f5474be6d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        336
+      ],
+      "id": "a43b3e5c-a48c-4334-bba8-e1dc216c361a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "NBAfl0geyXBejQ44",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1088,
+        336
+      ],
+      "id": "b17fcff5-6ea2-4595-82ac-0a5098560cd1",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let res = []\nfor(const item of $input.first().json.rss.channel.item){\n  res.push({\"link\": item.link,\"title\": item.title});\n}\nreturn res.slice(0,10);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        144
+      ],
+      "id": "e17ae8d7-eb5d-445c-9c26-3dd40bd661b3",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        240
+      ],
+      "id": "20770a1b-5be7-4819-bf54-ea0b77d75267",
+      "name": "Discord",
+      "webhookId": "948b155d-e27a-4b6c-94e6-ff3ec3019d5f",
+      "alwaysOutputData": false,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "YE7yymVUbStqCqxg",
+          "name": "空服channel"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE news (\n    id SERIAL PRIMARY KEY,\n    title TEXT NOT NULL,\n    link TEXT NOT NULL\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -128,
+        -160
+      ],
+      "id": "c0745812-674f-4c25-8d78-40d38c97d7d3",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "j1nx5kHr5WECHHYz",
+          "name": "news account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "KJqQFPrtqk2pxX7e",
+          "mode": "list",
+          "cachedResultName": "[Sub] Check data not exist"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        144
+      ],
+      "id": "002591c9-9017-4cce-8a22-5f5a7e0cebaf",
+      "name": "Call '[Sub] Check data not exist'"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        48
+      ],
+      "id": "922df378-13af-47c6-ae31-cf39279a1ef5",
+      "name": "Discord1",
+      "webhookId": "948b155d-e27a-4b6c-94e6-ff3ec3019d5f",
+      "alwaysOutputData": false,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "QExacXLgZeWqKQ0V",
+          "name": "大學中channel"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Call '[Sub] Check data not exist'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Discord1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[Sub] Check data not exist'": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b7a48c83-ea5f-4098-b3a2-c331c11b9905",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60292e1fb129390e367978159f211f377a1cf03e2e3ca455b41df16aef106ec2"
+  },
+  "id": "5LrIWFwvckAgujc1",
+  "tags": []
+}
